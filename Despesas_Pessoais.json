@@ -1,0 +1,218 @@
+{
+  "name": "Despesas_Pessoais",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a2c2848f-0884-4ece-a2e1-8aa3fe4705b4",
+      "name": "Telegram Trigger",
+      "webhookId": "c2e601a2-cc57-4deb-8963-366c0ae88a4f",
+      "credentials": {
+        "telegramApi": {
+          "id": "SgmXilgybo6XxO5K",
+          "name": "Despesas"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Code node (JavaScript)\n// Retorna um array com objetos prontos para o Google Sheets.\n// Trata mensagens no formato: descricao/categoria/valor/formapagamento\n// Observação: a mensagem do Telegram geralmente está em item.json.message.text\n\nconst pad = (n) => n.toString().padStart(2, '0');\n\nconst output = items.map((item) => {\n  try {\n    // Pega o objeto da mensagem (telegram coloca em item.json.message)\n    const msgObj = item.json?.message || item.json;\n    const text = (msgObj?.text || msgObj?.caption || \"\").toString().trim();\n\n    if (!text) {\n      return { json: { error: 'Mensagem sem texto', original: item.json } };\n    }\n\n    // Split a partir do fim: permite que a descrição contenha \"/\"\n    const parts = text.split('/');\n    const formaPagamento = (parts.pop() || '').trim();\n    const valorRaw = (parts.pop() || '').trim();\n    const categoria = (parts.pop() || '').trim();\n    const descricao = parts.join('/').trim(); // junta o que sobrou (descrição)\n\n    // Normaliza/parseia o valor\n    let valorClean = valorRaw.replace(/\\s/g, '')       // remove espaços\n                             .replace(/[Rr]\\$/g, '')   // remove \"R$\"\n                             .replace(/\\./g, '')       // remove separador de milhares\n                             .replace(',', '.');       // vírgula -> ponto\n    const valorNum = isNaN(Number(valorClean)) ? valorRaw : Number(valorClean);\n\n    // Data/hora: se Telegram enviou timestamp (seconds since epoch) usa isso\n    let msgDate;\n    if (msgObj?.date) {\n      msgDate = new Date(msgObj.date * 1000);\n    } else {\n      msgDate = new Date();\n    }\n\n    const YYYY = msgDate.getFullYear();\n    const MM = pad(msgDate.getMonth() + 1);\n    const DD = pad(msgDate.getDate());\n    const hh = pad(msgDate.getHours());\n    const mm = pad(msgDate.getMinutes());\n    const ss = pad(msgDate.getSeconds());\n\n    const dataISO = `${YYYY}-${MM}-${DD}`;\n    const dataBR = `${DD}/${MM}/${YYYY}`;\n    const hora = `${hh}:${mm}:${ss}`;\n    const dataHoraISO = `${dataISO}T${hh}:${mm}:${ss}Z`;\n\n    // Carimbo único baseado na data/hora do envio + sufixo aleatório de 4 dígitos\n    const idStamp = `ID-${YYYY}${MM}${DD}${hh}${mm}${ss}-${Math.floor(Math.random() * 9000 + 1000)}`;\n\n    return {\n      json: {\n        ID: idStamp,\n        DataISO: dataISO,\n        DataBR: dataBR,\n        Hora: hora,\n        DataHoraISO: dataHoraISO,\n        Descricao: descricao,\n        Categoria: categoria,\n        Valor: valorNum,\n        ValorRaw: valorRaw,\n        FormaPagamento: formaPagamento,\n        originalMessage: item.json\n      }\n    };\n  } catch (err) {\n    return { json: { error: err.message, original: item.json } };\n  }\n});\n\nreturn output;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "e85dda0d-76f6-40b7-a349-eb6bcba379bf",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1v2ZCMdSLzqUaX0xjxuC4s68EvkcMS-c3Ua3S2Z_jk48",
+          "mode": "list",
+          "cachedResultName": "Despesas_Pessoais",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1v2ZCMdSLzqUaX0xjxuC4s68EvkcMS-c3Ua3S2Z_jk48/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1v2ZCMdSLzqUaX0xjxuC4s68EvkcMS-c3Ua3S2Z_jk48/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{ $json.ID }}",
+            "Data": "={{ $json.DataBR }}",
+            "Descrição": "={{ $json.Descricao }}",
+            "Categoria": "={{ $json.Categoria }}",
+            "Valor": "={{ $json.Valor }}",
+            "Forma de Pagamento": "={{ $json.FormaPagamento }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Data",
+              "displayName": "Data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Descrição",
+              "displayName": "Descrição",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Categoria",
+              "displayName": "Categoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Valor",
+              "displayName": "Valor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Forma de Pagamento",
+              "displayName": "Forma de Pagamento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        0
+      ],
+      "id": "e73ff7cc-3223-4ae5-838b-e0d2b64c52aa",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KJ5xyjBnttTDJZps",
+          "name": "Despesas"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=A despesa {{ $json['Descrição'] }} foi inserida com sucesso!",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "21d14d95-27e3-44f2-9eaf-284b7bdb2ca6",
+      "name": "Send a text message",
+      "webhookId": "ae242527-c2bd-4286-9f94-f9fb34033ed5",
+      "credentials": {
+        "telegramApi": {
+          "id": "SgmXilgybo6XxO5K",
+          "name": "Despesas"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "071836bf-62ae-402f-8522-f283e4cc60cd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5596c46db4498ec3f594daeadcb268de828b6728be81e96542cc6210d95e35b1"
+  },
+  "nodeGroups": [],
+  "id": "uyuIlsFm7bYVSfFU",
+  "tags": []
+}
