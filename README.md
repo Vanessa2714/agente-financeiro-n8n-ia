@@ -1,12 +1,12 @@
 # Agente Autónomo de Gestão Financeira (n8n + LLM + Telegram)
 
 # Visão Geral do Projeto
-Desenvolvimento de uma solução end-to-end de automação inteligente para gestão e registo de dados financeiros. O sistema recebe mensagens de texto via Telegram, utiliza um modelo de linguagem (LLM) para extração de entidades e categorização, e armazena os dados processados automaticamente em uma planilha.
+Desenvolvimento de uma solução de automação inteligente para gestão e registo de dados financeiros. O sistema recebe mensagens de texto via Telegram, utiliza um modelo de linguagem (LLM) para extração de entidades e categorização, e armazena os dados processados automaticamente em uma planilha.
 
 # Tecnologias & Ferramentas
 * *Orquestração de Fluxos:* n8n (Docker / WSL 2)
-* *Inteligência Artificial:* OpenAI GPT / Google Gemini (Prompt Engineering com saída em JSON estrito)
-* *Integração & Mensagaria:* APIs / Webhooks de integração com Telegram
+* *Inteligência Artificial:* OpenAI GPT / Google Gemini (Prompt Engineering com saída em JSON)
+* *Integração & Mensagaria:* APIs / Integração com Telegram
 * *Dados:* JSON
 
 # Como Funciona a Solução
